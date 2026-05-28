@@ -17,6 +17,10 @@ await connectDB();
 await connectCloudinary();
 
 app.use(cors());
+
+// Stripe raw webhook endpoint must be placed before global express.json() parser
+app.post("/stripe", express.raw({type:'application/json'}), stripeWebhooks);
+
 app.use(express.json());
 
 // GLOBAL LOGGER
@@ -36,7 +40,6 @@ app.get("/", (req, res) => res.send("API working"));
 app.use("/api/educator", educatorRouter);
 app.use("/api/course", express.json(), courseRouter)
 app.use('/api/user', express.json(), userRouter)
-app.post("/stripe",express.raw({type:'application/json'}), stripeWebhooks)
 app.listen(5000, () => {
   console.log("Server running on 5000");
 });
