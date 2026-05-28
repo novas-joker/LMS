@@ -122,7 +122,12 @@ export const updateUserCourseProgress = async (req, res) => {
 export const getUserCourseProgress = async (req, res) => {
     try {
         const { userId } = req.auth();
-        const { courseId } = req.body;
+        const courseId = req.body?.courseId || req.query?.courseId;
+
+        if (!courseId) {
+            return res.json({ success: false, message: "Course ID is required" });
+        }
+
         const progressData = await CourseProgress.findOne({ userId, courseId });
         if (!progressData) {
             return res.json({ success: false, message: "No progress found" });
