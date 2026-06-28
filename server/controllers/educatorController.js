@@ -69,14 +69,17 @@ export const addCourse = async (req, res) => {
 
     parsedCourseData.educator = userId;
 
-    const newCourse = await Course.create(parsedCourseData);
-    console.log("Course created");
+    if (!parsedCourseData.courseTitle || !parsedCourseData.courseDescription || !parsedCourseData.coursePrice) {
+      return res.json({ success: false, message: "Missing required fields" });
+    }
 
     const imageUpload = await cloudinary.uploader.upload(imageFile.path);
     console.log("Image uploaded");
 
-    newCourse.courseThumbnail = imageUpload.secure_url;
-    await newCourse.save();
+    parsedCourseData.courseThumbnail = imageUpload.secure_url;
+
+    const newCourse = await Course.create(parsedCourseData);
+    console.log("Course created");
 
     console.log("SENDING RESPONSE");
 

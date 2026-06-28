@@ -99,13 +99,14 @@ export const stripeWebhooks = async (request, response) => {
         // Avoid duplicate enrollment if webhook fires twice
         if (!courseData.enrolledStudents.includes(userData._id)) {
           courseData.enrolledStudents.push(userData._id); // Push _id string, not whole userData document to avoid Mongoose CastError
-          await courseData.save();
         }
         
         if (!userData.enrolledCourses.includes(courseData._id)) {
           userData.enrolledCourses.push(courseData._id);
-          await userData.save();
         }
+
+        await courseData.save();
+        await userData.save();
 
         purchaseData.status = "completed";
         await purchaseData.save();

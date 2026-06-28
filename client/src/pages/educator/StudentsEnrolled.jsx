@@ -1,14 +1,29 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { dummyStudentEnrolled } from '../../assets/assets'
 import Loading from '../../components/student/Loading';
+import { AppContext } from '../../context/AppContext';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+
 const StudentsEnrolled = () => {
+  const { backendUrl, getToken } = useContext(AppContext);
   const [enrolledStudents, setEnrolledStudents] = useState(null);
-  const fetchEnrolledStudents=async()=>{
-    setEnrolledStudents(dummyStudentEnrolled)
+  const fetchEnrolledStudents = async () => {
+    try {
+      const token = await getToken();
+      const { data } = await axios.get(backendUrl + '/api/educator/enrolled-students', { headers: { Authorization: `Bearer ${token}` } });
+      if (data.success) {
+        setEnrolledStudents(data.enrolledStudents);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
   }
-  useEffect(()=>{
+  useEffect(() => {
     fetchEnrolledStudents()
-  },[])
+  }, [])
   return enrolledStudents ? (
     <div className='min-h-screen flex flex-col items-start justify-between md:p-8 md:pb-0 p-4 pt-8 pb-0'>
       <div className='flex flex-col items-center max-w-4xl w-full overflow-hidden 
