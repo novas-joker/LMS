@@ -6,23 +6,48 @@ import {assets} from '../../assets/assets';
 import humanizeDuration from 'humanize-duration';
 import Footer from '../../components/student/Footer';
 import YouTube from 'react-youtube';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const CourseDetails = () => {
-  const {id} = useParams();
-  const [courseData,setCourseData] = useState(null);
-  const [openSections,setOpenSections] = useState({});
-  const [isAlreadyEnrolled,setIsAlreadyEnrolled] = useState(false);
-  const [playerData,setPlayerData] = useState(null);
-  const {allCourses,calculateRating,calculateNoOfLectures,calculateChapterTime,calculateCourseDuration,currency
-    } = useContext(AppContext);
+  const { id } = useParams();
+  const [courseData, setCourseData] = useState(null);
+  const [openSections, setOpenSections] = useState({});
+  const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(false);
+  const [playerData, setPlayerData] = useState(null);
+  const { allCourses, calculateRating, calculateNoOfLectures, calculateChapterTime, calculateCourseDuration, currency, backendUrl, getToken, enrolledCourses
+  } = useContext(AppContext);
   const fetchCourseData = async ()=>{
     const findCourse = allCourses.find(course => course._id === id);
     setCourseData(findCourse);
   }
-  useEffect(()=>{
+  useEffect(() => {
     fetchCourseData()
-  },[allCourses])
-  const toggleSection = (index) =>{
+  }, [allCourses])
+
+  useEffect(() => {
+    if (enrolledCourses.length > 0 && courseData) {
+      setIsAlreadyEnrolled(enrolledCourses.some(item => item._id === courseData._id))
+    }
+  }, [enrolledCourses, courseData])
+
+  const enrollCourse = async () => {
+    try {
+      if (!courseData) return;
+      const token = await getToken();
+      const { data } = await axios.post(backendUrl + '/api/user/purchase', { courseId: courseData._id }, { headers: { Authorization: `Bearer ${token}` } });
+      if (data.success) {
+        const { session_url } = data;
+        window.location.replace(session_url);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  }
+
+  const toggleSection = (index) => {
     setOpenSections((prev)=>(
       {...prev,[index]:!prev[index]}
     ))
@@ -38,7 +63,7 @@ const CourseDetails = () => {
         <h1 className='md:text-course-details-heading-large text-course-details-heading-small
         font-semibold text-gray-800'>{courseData.courseTitle}</h1>
         <p className='pt-4 md:text-base text-sm' 
-        dangerouslySetInnerHTML={{__html: courseData.courseDescription.slice(0,200)}}></p>
+        dangerouslySetInnerHTML={{__html: courseData.courseDescription ? courseData.courseDescription.slice(0,200) : ''}}></p>
         {/*review and ratings*/}
         <div className='flex items-center space-x-2 pt-3 pb-1 text-sm'>
                         <p>{calculateRating(courseData)}</p>
@@ -101,7 +126,7 @@ const CourseDetails = () => {
                     <div className='py-20 text-sm md:text-default'>
                       <h3 className='text-xl font-semibold text-gray-800'>Course Description</h3>
                       <p className='pt-3 rich-text' 
-                      dangerouslySetInnerHTML={{__html: courseData.courseDescription}}></p>
+                      dangerouslySetInnerHTML={{__html: courseData.courseDescription || ''}}></p>
                     </div>
       </div>
       {/*right column*/}
@@ -141,7 +166,7 @@ const CourseDetails = () => {
               <p>{calculateNoOfLectures(courseData)} lessons</p>
             </div>
           </div>
-          <button className='md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 text-white font-medium'>{isAlreadyEnrolled ? 'Already Enrolled' : 'Enroll Now'}</button>
+          <button onClick={enrollCourse} className='md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 text-white font-medium'>{isAlreadyEnrolled ? 'Already Enrolled' : 'Enroll Now'}</button>
           <div className='pt-6'>
             <p className='md:text-xl text-lg font-medium text-gray-800'>What's in the course?</p>
             <ul className='ml-4 pt-2 text-sm md:text-default list-disc text-gray-500'>
